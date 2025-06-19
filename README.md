@@ -1,5 +1,4 @@
-# Webhook Service – Render.com Version
-
+# Webhook Service
 This is a simple FastAPI service that accepts and processes webhook payloads with a 5-second delay.
 
 ---
@@ -11,9 +10,9 @@ This is a simple FastAPI service that accepts and processes webhook payloads wit
 
 ---
 
-## 🚀 Deploying to Render (Simplified)
+## 🚀 Deploying to Render
 
-This project uses Render's **native GitHub auto-deploy**, making deployment simple and fast.
+This project uses Render's **native GitHub auto-deploy**.
 
 ### Steps:
 
