@@ -1,22 +1,29 @@
 from fastapi import FastAPI, Request
-from sqlmodel import Field, SQLModel, create_engine, Session, select
+from sqlmodel import Field, SQLModel, create_engine, Session, select, Column
+from sqlalchemy import JSON
 from typing import List
 from datetime import datetime, timezone
-import uuid, asyncio
+import uuid
+import asyncio
 
 # Initialize FastAPI app
 app = FastAPI()
 
 # Use SQLite for persistent storage
 DATABASE_URL = "sqlite:///./webhooks.db"
-engine = create_engine(DATABASE_URL)
+engine = create_engine(DATABASE_URL, echo=True)
 
 # Define the Webhook model using SQLModel (ORM)
 class Webhook(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)  # Unique webhook ID
-    received_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))  # Timestamp of reception
+
+    # Use timezone-aware datetime (UTC)
+    received_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
     status: str = "unprocessed"  # Either 'unprocessed' or 'processed'
-    payload: dict  # Stores JSON payload
+
+    # Store JSON payload with proper JSON column type
+    payload: dict = Field(sa_column=Column(JSON))
 
 # Create DB tables at startup
 @app.on_event("startup")
@@ -26,7 +33,7 @@ def init_db():
 # POST endpoint to receive a webhook
 @app.post("/webhook")
 async def receive_webhook(req: Request):
-    payload = await req.json()  # Accept any JSON payload
+    payload = await req.json()
 
     # Create and save webhook entry
     webhook = Webhook(payload=payload)
@@ -34,12 +41,12 @@ async def receive_webhook(req: Request):
         session.add(webhook)
         session.commit()
 
-    # Start async background task to "process" the webhook
+    # Start async background task to "process" the webhook after 5 seconds
     asyncio.create_task(process_webhook(webhook.id))
 
     return {"message": "Webhook received", "id": webhook.id}
 
-# Background task to simulate 5s processing delay
+# Background task to simulate 5-second processing delay
 async def process_webhook(webhook_id: str):
     try:
         await asyncio.sleep(5)  # Simulate processing delay
@@ -52,12 +59,12 @@ async def process_webhook(webhook_id: str):
                 session.add(webhook)
                 session.commit()
     except Exception as e:
-        print(f"Error processing {webhook_id}: {e}")  # Log processing failures
+        print(f"Error processing {webhook_id}: {e}") 
 
 # GET endpoint to return list of received webhooks
 @app.get("/webhooks")
 def list_webhooks() -> List[Webhook]:
     with Session(engine) as session:
-        # Fetch webhooks in reverse chronological order
+        # Fetch webhooks in reverse chronological order (latest first)
         webhooks = session.exec(select(Webhook).order_by(Webhook.received_at.desc())).all()
     return webhooks
