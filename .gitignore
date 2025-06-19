@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.log
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# Editor settings
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# System files
+.DS_Store
+Thumbs.db
+
+# SQLite DB
+webhooks.db
+
+# Byte-compiled + cache
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.cache/
+
+# Docker
+*.tar
+*.img
+
+# Terraform
+terraform.tfstate
+terraform.tfstate.*
+.terraform/
+*.tfvars
+*.tfplan
+crash.log
+
+# Render CLI 
+render.yaml.lock.json
