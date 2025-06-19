@@ -34,17 +34,18 @@ def init_db():
 @app.post("/webhook")
 async def receive_webhook(req: Request):
     payload = await req.json()
-
-    # Create and save webhook entry
     webhook = Webhook(payload=payload)
+
     with Session(engine) as session:
         session.add(webhook)
         session.commit()
+        session.refresh(webhook)  # Ensures the ID is available
+        webhook_id = webhook.id   # Capture ID before session closes
 
-    # Start async background task to "process" the webhook after 5 seconds
-    asyncio.create_task(process_webhook(webhook.id))
+    # Now pass the captured ID to background task
+    asyncio.create_task(process_webhook(webhook_id))
 
-    return {"message": "Webhook received", "id": webhook.id}
+    return {"message": "Webhook received", "id": webhook_id}
 
 # Background task to simulate 5-second processing delay
 async def process_webhook(webhook_id: str):
@@ -68,3 +69,7 @@ def list_webhooks() -> List[Webhook]:
         # Fetch webhooks in reverse chronological order (latest first)
         webhooks = session.exec(select(Webhook).order_by(Webhook.received_at.desc())).all()
     return webhooks
+
+@app.get("/health")
+def health_check():
+    return {"ok": True}
